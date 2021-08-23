@@ -1,15 +1,18 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package com.amazon.aws.keyspaces;
 
 import java.io.Serializable;
 
 public class State implements Serializable {
     private static final long serialVersionUID = 13487495895819393L;
-    long startingPage;
-    long processedPages;
-    double pageRate;
-    String query;
-    String path;
-    String errorMessage;
+    private long startingPage;
+    private long processedPages;
+    private double pageRate;
+    private String query;
+    private String path;
+    private String errorMessage;
 
     public State() {
 

@@ -1,9 +1,5 @@
-/*
-This sample, non-production-ready Export Tool.
-© 2020 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-This AWS Content is provided subject to the terms of the AWS Customer Agreement available at http://aws.amazon.com/agreement or
-other written agreement between Customer and eitherAmazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
-*/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package com.amazon.aws.keyspaces;
 
@@ -13,30 +9,34 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-
 import java.time.Instant;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-@CommandLine.Command(name = "AKExportTool", mixinStandardHelpOptions = true, version = "AKExportTool 1.0",
+@CommandLine.Command(name = "AKExportTool", mixinStandardHelpOptions = true, version = "1.0",
         description = "Exports data from Amazon Keyspaces to HDFS in the parquet format.")
 
 public class Runner implements Callable<Integer> {
 
+    private static final Logger LOG = Logger.getLogger(Runner.class.getName());
+    @CommandLine.Option(names = "--recover", description = "Recovering mode")
+    boolean recoveringMode = false;
     @CommandLine.Parameters(index = "0", description = "Destination of parquet files")
-    private String dataLocation = System.getProperty("user.dir")+"/"+"output";
+    private final String dataLocation = System.getProperty("user.dir") + "/" + "output";
     @CommandLine.Parameters(index = "1", description = "Query")
     private String query;
     @CommandLine.Option(names = {"-p", "--page"}, description = "Starting page")
-    private int startingPage=0;
+    private final int startingPage = 0;
     @CommandLine.Option(names = {"-r", "--rateLimiter"}, description = "A rate limiter")
-    private int rateLimiter=3000;
-    @CommandLine.Option(names = "--recover", description = "Recovering mode")
-    boolean recoveringMode = false;
+    private final int rateLimiter = 3000;
+    private final File configFile = new File(System.getProperty("user.dir") + "/application.conf");
 
-
-    private File configFile = new File(System.getProperty("user.dir")+"/application.conf");
-    private static final Logger LOG = Logger.getLogger(Runner.class.getName());
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InterruptedException {
+        int exitCode = new CommandLine(new Runner()).execute(args);
+        System.exit(exitCode);
+    }
 
     @Override
     public Integer call() throws Exception {
@@ -61,23 +61,22 @@ public class Runner implements Callable<Integer> {
         }
 
         if (stateFile.exists() == true &&
-                recoveringMode == true)
-        {
+                recoveringMode == true) {
 
             LOG.info("Found state.ser file");
             State state = Utils.readState();
             LOG.info("Overriding the parameters by parameters from state.ser");
-            LOG.info("Restoring the exporting process from the error:"+state.errorMessage);
-            LOG.info("Restoring position " + state.processedPages);
+            LOG.info("Restoring the exporting process from the error:" + state.getErrorMessage());
+            LOG.info("Restoring position " + state.getProcessedPages());
             long startTime = System.nanoTime();
             CountDownLatch countDownLatch = new CountDownLatch(1);
             PersistCassandraRowToParquet persistCassandraRowToParquet = new PersistCassandraRowToParquet(
-                    state.query,
-                    state.path,
+                    state.getQuery(),
+                    state.getPath(),
                     countDownLatch,
                     configFile,
-                    state.processedPages,
-                    Math.min(11, (int) Math.round(state.pageRate))
+                    state.getProcessedPages(),
+                    Math.min(11, (int) Math.round(state.getPageRate()))
             );
 
             LOG.info("Export in progress...");
@@ -89,14 +88,9 @@ public class Runner implements Callable<Integer> {
             long elapsedTime = System.nanoTime() - startTime;
             LOG.info("Elapsed time in seconds:" + TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS));
             // Let's rename our old state.ser to another file
-            File stateFileOld = new File("state_"+Instant.now().toString()+".ser");
+            File stateFileOld = new File("state_" + Instant.now().toString() + ".ser");
             stateFile.renameTo(stateFileOld);
         }
         return 0;
-    }
-
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InterruptedException {
-        int exitCode = new CommandLine(new Runner()).execute(args);
-        System.exit(exitCode);
     }
 }
