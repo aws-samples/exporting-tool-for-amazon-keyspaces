@@ -29,9 +29,12 @@ The failed state will be persisted into state.ser file and renamed after it is p
  
 # Validation
 You can validate parquet files on HDFS/FS by using Apache Spark (spark-shell). 
-For example, `val parquetFileDF = spark.read.parquet("file:///keyspace-name/table-name") 
-              parquetFileDF.count() 
-              parquetFileDF.show()`
+For example, 
+```
+    val parquetFileDF = spark.read.parquet("file:///keyspace-name/table-name") 
+    parquetFileDF.count() 
+    parquetFileDF.show()
+```
  # License
  
  This library is licensed under the Apache-2 License. See the LICENSE file.
