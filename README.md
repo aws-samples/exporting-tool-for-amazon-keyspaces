@@ -1,6 +1,5 @@
 # Exporting Tool for Amazon Keyspaces
-The exporting tool (the tool) offloads Amazon Keyspaces table to HDFS/FS without potential deadlocks and memory leaks (overhead) 
-on the client side due to synchronous process. 
+The exporting tool (the tool) offloads Amazon Keyspaces table to HDFS/FS
  
 # Build this project
 To build and use this library execute the following mvn command and place on the classpath of your application. 
