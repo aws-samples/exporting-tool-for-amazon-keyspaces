@@ -51,7 +51,11 @@ public class PersistCassandraRowToParquet {
     private final long startingPage;
     private final RateLimiter pageLimiter;
 
-    public PersistCassandraRowToParquet(String query, String path, CountDownLatch countDownLatch, File driverConfig, long startingPage, int rateLimiter) throws NoSuchAlgorithmException, JsonProcessingException, InterruptedException {
+    /**
+     * Class constructor specifying a parquet writer within the Cassandra query.
+     */
+
+    public PersistCassandraRowToParquet(String query, String path, CountDownLatch countDownLatch, File driverConfig, long startingPage, int rateLimiter) throws NoSuchAlgorithmException, JsonProcessingException  {
         this.query = query;
         this.latch = countDownLatch;
         this.startingPage = startingPage;
@@ -78,6 +82,17 @@ public class PersistCassandraRowToParquet {
         this.schema = avroSchema;
     }
 
+
+    /**
+     * Writes a list of JSON rows with avro read's schema to a parquet file.
+     * <p>
+     * ParquetWriter uses SNAPPY compression
+     * @param  recordsToWrite a list of JSON strings
+     * @param  path the location the parquet file, absolute path
+     * @param  SCHEMA the Avro schema
+     * @return void
+     */
+
     public static void writeToParquet(List<String> recordsToWrite, String path, Schema SCHEMA) throws IOException {
         //Let's turned off INFO level for org.apache.parquet.hadoop
         Logger.getLogger("org.apache.parquet.hadoop").setLevel(Level.SEVERE);
@@ -97,6 +112,16 @@ public class PersistCassandraRowToParquet {
         }
     }
 
+
+    /**
+     * Converts a json string into an avro generic row with provided avro schema
+     *
+     * @param  json  a json to convert into a generic avro record based on the schema
+     * @param  schema an avro schema
+     * @return  Returns a generic avro record
+     * @see    GenericData.Record
+     */
+
     private static GenericData.Record parseJson(String json, Schema schema)
             throws IOException {
         Decoder decoder = DecoderFactory.get().jsonDecoder(schema, json);
@@ -105,6 +130,19 @@ public class PersistCassandraRowToParquet {
                 new GenericDatumReader<>(schema);
         return reader.read(null, decoder);
     }
+
+
+    /**
+     * Reads Cassandra rows asynchronously. Asynchronous methods return instances of the JDK’s CompletionStage,
+     * that can be conveniently chained and composed
+     *<p>
+     * The asynchronous API never triggers synchronous behavior, even when iterating through the results of a request.
+     * session.executeAsync returns a dedicated AsyncResultSet that only iterates the current page, the next pages must be fetched explicitly.
+     * This greatly simplifies asynchronous paging
+     * @param  rs Async Cassandra resultSet
+     * @param  error Propagated error.
+     * @return      void
+     */
 
     void processRowsAsync(AsyncResultSet rs, Throwable error) {
         if (error != null) {
