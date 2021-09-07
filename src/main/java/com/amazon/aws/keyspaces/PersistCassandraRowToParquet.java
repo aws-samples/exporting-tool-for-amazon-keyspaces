@@ -173,8 +173,12 @@ public class PersistCassandraRowToParquet {
 
             if (rs.hasMorePages()) {
                 pageLimiter.acquire();
-                rs.fetchNextPage().whenComplete(this::processRowsAsync);
-                processedPage++;
+                //rs.fetchNextPage().whenComplete(this::processRowsAsync);
+                //processedPage++;
+                rs.fetchNextPage().whenComplete((thisRs, thisError) ->{
+                    processRowsAsync(thisRs, thisError);
+                    processedPage++;
+                });
             } else {
                 LOG.info("Completed to read pages");
                 LOG.info("Starting page was " + startingPage);

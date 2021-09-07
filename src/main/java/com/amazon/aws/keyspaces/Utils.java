@@ -3,10 +3,10 @@
 
 package com.amazon.aws.keyspaces;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.logging.Logger;
 
 public class Utils {
@@ -14,10 +14,9 @@ public class Utils {
 
     public static void writeState(State state) {
         try {
+            ObjectMapper mapper = new ObjectMapper();
             FileOutputStream myFileOutputStream = new FileOutputStream(System.getProperty("user.dir") + "/state.ser");
-            ObjectOutputStream myObjectOutputStream = new ObjectOutputStream(myFileOutputStream);
-            myObjectOutputStream.writeObject(state);
-            myObjectOutputStream.close();
+            mapper.writeValue(myFileOutputStream, state);
         } catch (Exception e) {
             LOG.severe("Error when saving to file." + e.getMessage());
         }
@@ -26,13 +25,13 @@ public class Utils {
     public static State readState() {
         State state = new State();
         try {
+            ObjectMapper mapper = new ObjectMapper();
             FileInputStream myFileInputStream = new FileInputStream(System.getProperty("user.dir") + "/state.ser");
-            ObjectInputStream myObjectInputStream = new ObjectInputStream(myFileInputStream);
-            state = (State) myObjectInputStream.readObject();
-            myObjectInputStream.close();
+            state = mapper.readValue(myFileInputStream, State.class);
         } catch (Exception e) {
             LOG.severe("Error when loading from file." + e.getMessage());
         }
         return state;
     }
+
 }

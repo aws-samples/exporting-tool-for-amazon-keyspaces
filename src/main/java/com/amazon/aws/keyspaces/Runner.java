@@ -21,16 +21,22 @@ import java.util.logging.Logger;
 public class Runner implements Callable<Integer> {
 
     private static final Logger LOG = Logger.getLogger(Runner.class.getName());
+    // Default timeout is 86,400 seconds
+    private static final long ONE_DAY = 1*24*60*60;
+
+
     @CommandLine.Option(names = "--recover", description = "Recovering mode")
     boolean recoveringMode = false;
     @CommandLine.Parameters(index = "0", description = "Destination of parquet files")
-    private final String dataLocation = System.getProperty("user.dir") + "/" + "output";
+    private String dataLocation = System.getProperty("user.dir") + "/" + "output";
     @CommandLine.Parameters(index = "1", description = "Query")
     private String query;
     @CommandLine.Option(names = {"-p", "--page"}, description = "Starting page")
-    private final int startingPage = 0;
+    private int startingPage = 0;
     @CommandLine.Option(names = {"-r", "--rateLimiter"}, description = "A rate limiter")
-    private final int rateLimiter = 3000;
+    private int rateLimiter = 3000;
+    @CommandLine.Option(names = {"-t", "--timeout"}, description = "Override default timeout 86400 seconds")
+    private long timeout = ONE_DAY;
     private final File configFile = new File(System.getProperty("user.dir") + "/application.conf");
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InterruptedException {
@@ -53,7 +59,7 @@ public class Runner implements Callable<Integer> {
             LOG.info("Export in progress...");
             LOG.info("Dest:" + dataLocation);
             persistCassandraRowToParquet.start();
-            countDownLatch.await(604800, TimeUnit.SECONDS);
+            countDownLatch.await(timeout, TimeUnit.SECONDS);
             persistCassandraRowToParquet.close();
             LOG.info("Amazon Keyspaces Session is closed");
             long elapsedTime = System.nanoTime() - startTime;
@@ -76,13 +82,14 @@ public class Runner implements Callable<Integer> {
                     countDownLatch,
                     configFile,
                     state.getProcessedPages(),
+                    // 11 pages * 3500 rows per page * 100 bytes per row = 3,759 kilobytes per partition
                     Math.min(11, (int) Math.round(state.getPageRate()))
             );
 
             LOG.info("Export in progress...");
             LOG.info("Dest:" + dataLocation);
             persistCassandraRowToParquet.start();
-            countDownLatch.await(604800, TimeUnit.SECONDS);
+            countDownLatch.await(timeout, TimeUnit.SECONDS);
             persistCassandraRowToParquet.close();
             LOG.info("Amazon Keyspaces Session is closed");
             long elapsedTime = System.nanoTime() - startTime;
