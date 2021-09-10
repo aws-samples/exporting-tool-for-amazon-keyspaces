@@ -18,7 +18,7 @@ public class Utils {
             FileOutputStream myFileOutputStream = new FileOutputStream(System.getProperty("user.dir") + "/state.ser");
             mapper.writeValue(myFileOutputStream, state);
         } catch (Exception e) {
-            LOG.severe("Error when saving to file." + e.getMessage());
+            LOG.severe("Error when saving to the state file." + e.getMessage());
         }
     }
 
@@ -29,7 +29,7 @@ public class Utils {
             FileInputStream myFileInputStream = new FileInputStream(System.getProperty("user.dir") + "/state.ser");
             state = mapper.readValue(myFileInputStream, State.class);
         } catch (Exception e) {
-            LOG.severe("Error when loading from file." + e.getMessage());
+            LOG.severe("Error when loading from the state file." + e.getMessage());
         }
         return state;
     }

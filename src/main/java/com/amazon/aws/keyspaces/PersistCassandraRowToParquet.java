@@ -176,8 +176,8 @@ public class PersistCassandraRowToParquet {
                 //rs.fetchNextPage().whenComplete(this::processRowsAsync);
                 //processedPage++;
                 rs.fetchNextPage().whenComplete((thisRs, thisError) ->{
-                    processRowsAsync(thisRs, thisError);
                     processedPage++;
+                    processRowsAsync(thisRs, thisError);
                 });
             } else {
                 LOG.info("Completed to read pages");
