@@ -36,4 +36,4 @@ For example,
 ```
  # License
  
- This library is licensed under the Apache-2 License. See the LICENSE file.
+ This tool is licensed under the Apache-2 License. See the LICENSE file.
